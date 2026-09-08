@@ -1,528 +1,277 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kids Coloring App - Fixed Layers</title>
+  <title>Kids Coloring App</title>
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      user-select: none;
-    }
-
-    body {
-      background-color: #eef5ff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
-      padding: 15px;
-    }
-
-    h1 {
-      color: #ff4757;
-      margin-bottom: 12px;
-      font-size: 2rem;
-    }
-
-    .container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      background: white;
-      padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-      max-width: 850px;
-      width: 100%;
-    }
-
-    .gallery {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 15px;
-      align-items: center;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .gallery span {
-      font-weight: bold;
-      color: #2f3542;
-    }
-
-    .thumb {
-      width: 48px;
-      height: 48px;
-      border: 2px solid #ddd;
-      border-radius: 10px;
-      cursor: pointer;
-      background-color: #f9f9f9;
-      transition: transform 0.1s ease, border-color 0.2s ease;
-      padding: 3px;
-    }
-
-    .thumb:hover {
-      transform: scale(1.1);
-      border-color: #1e90ff;
-    }
-
-    .toolbar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      justify-content: center;
-      margin-bottom: 15px;
-      width: 100%;
-    }
-
-    .palette {
-      display: flex;
-      gap: 6px;
-    }
-
-    .color-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 3px solid white;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      cursor: pointer;
-      transition: transform 0.1s ease;
-    }
-
-    .color-btn:hover, .color-btn.active {
-      transform: scale(1.2);
-    }
-
-    .brush-size {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: bold;
-      color: #2f3542;
-    }
-
-    .controls {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .action-btn {
-      background-color: #54a0ff;
-      color: white;
-      border: none;
-      padding: 8px 12px;
-      border-radius: 12px;
-      font-weight: bold;
-      cursor: pointer;
-      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
-      transition: background 0.2s ease, opacity 0.2s ease;
-    }
-
-    .action-btn:hover {
-      background-color: #2e86de;
-    }
-
-    .action-btn:disabled {
-      background-color: #ccc !important;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-
-    .action-btn.undo { background-color: #eccc68; color: #2f3542; }
-    .action-btn.clear { background-color: #ff6b81; }
-    .action-btn.download { background-color: #2ed573; }
-    .action-btn.add-layer { background-color: #a55eea; }
-
-    /* Control de Capas */
-    .layer-manager {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: #f1f2f6;
-      padding: 6px 10px;
-      border-radius: 12px;
-    }
-
-    .layer-list {
-      display: flex;
-      gap: 6px;
-    }
-
-    .layer-item {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      background: #ffffff;
-      padding: 4px 8px;
-      border-radius: 8px;
-      border: 2px solid transparent;
-      cursor: pointer;
-      font-size: 0.85rem;
-      font-weight: bold;
-      color: #57606f;
-    }
-
-    .layer-item.active {
-      border-color: #a55eea;
-      color: #2f3542;
-      background: #f3e8ff;
-    }
-
-    .layer-toggle-vis {
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    #imageLoader { display: none; }
-
-    /* Contenedor e Lienzos Superpuestos */
-    .canvas-container {
-      position: relative;
-      width: 700px;
-      height: 450px;
-      border: 4px dashed #70a1ff;
-      border-radius: 15px;
-      overflow: hidden;
-      background-color: #ffffff;
-    }
-
-    .canvas-container canvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      touch-action: none;
-    }
-
-    #bgCanvas {
-      z-index: 1;
-    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
+    body { background-color: #eef5ff; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 15px; }
+    h1 { color: #333; margin-bottom: 10px; font-size: 1.5rem; }
+    
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; background: white; padding: 10px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 12px; justify-content: center; max-width: 800px; width: 100%; }
+    .tool-group { display: flex; align-items: center; gap: 5px; border-right: 1px solid #eee; padding-right: 8px; margin-right: 3px; }
+    .btn { padding: 8px 12px; border: none; border-radius: 8px; background: #f0f0f0; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 4px; transition: background 0.2s; }
+    .btn:hover { background: #e0e0e0; }
+    .btn.active { background: #4a90e2; color: white; }
+    .btn-danger { background: #ffe0e0; color: #d32f2f; }
+    .btn-danger:hover { background: #ffcdd2; }
+    
+    .color-picker { width: 32px; height: 32px; border: none; border-radius: 50%; cursor: pointer; }
+    
+    .canvas-container { position: relative; width: 600px; height: 450px; background: white; border-radius: 12px; box-shadow: 0 6px 15px rgba(0,0,0,0.15); overflow: hidden; }
+    canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; touch-action: none; }
+    
+    /* Capas organizadas */
+    #backgroundCanvas { z-index: 1; }
+    #drawingCanvas { z-index: 2; }
+    #templateCanvas { z-index: 3; pointer-events: none; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1>🎨 Kids Paint Zone ✨</h1>
+  <h1>🎨 Mi Mini App de Pintar</h1>
 
-    <!-- Plantillas de la Galería -->
-    <div class="gallery">
-      <span>Templates:</span>
-      <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='40' stroke='black' stroke-width='4' fill='none'/><circle cx='35' cy='40' r='5' fill='black'/><circle cx='65' cy='40' r='5' fill='black'/><path d='M 30 65 Q 50 85 70 65' stroke='black' stroke-width='4' fill='none'/></svg>" class="thumb">
-      <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><polygon points='50,5 64,36 98,38 72,61 80,95 50,76 20,95 28,61 2,38 36,36' stroke='black' stroke-width='4' fill='none'/></svg>" class="thumb">
-      <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><path d='M 50 30 C 20 0, 0 40, 50 85 C 100 40, 80 0, 50 30 Z' stroke='black' stroke-width='4' fill='none'/></svg>" class="thumb">
-    </div>
-    
-    <div class="toolbar">
-      <div class="palette">
-        <button class="color-btn active" style="background-color: #ff4757;" data-color="#ff4757"></button>
-        <button class="color-btn" style="background-color: #2ed573;" data-color="#2ed573"></button>
-        <button class="color-btn" style="background-color: #1e90ff;" data-color="#1e90ff"></button>
-        <button class="color-btn" style="background-color: #ffa502;" data-color="#ffa502"></button>
-        <button class="color-btn" style="background-color: #9b59b6;" data-color="#9b59b6"></button>
-        <button class="color-btn" style="background-color: #2f3542;" data-color="#2f3542"></button>
-      </div>
-
-      <div class="brush-size">
-        <label for="size">Brush:</label>
-        <input type="range" id="size" min="2" max="40" value="10">
-      </div>
-
-      <!-- Administrador de Capas -->
-      <div class="layer-manager">
-        <div class="layer-list" id="layerList"></div>
-        <button class="action-btn add-layer" id="addLayerBtn">➕ Layer</button>
-      </div>
-
-      <div class="controls">
-        <button class="action-btn undo" id="undoBtn">↩️ Undo</button>
-        <label for="imageLoader" class="action-btn">🖼️ Upload</label>
-        <input type="file" id="imageLoader" accept="image/*">
-        <button class="action-btn clear" id="clearBtn">🗑️ Clear</button>
-        <button class="action-btn download" id="downloadBtn">💾 Save</button>
-      </div>
+  <div class="toolbar">
+    <!-- Selección de Brochas -->
+    <div class="tool-group">
+      <button class="btn active" id="btnBrush" onclick="setTool('brush')">🖌️ Pincel</button>
+      <button class="btn" id="btnMarker" onclick="setTool('marker')">🖋️ Marcador</button>
+      <button class="btn" id="btnPencil" onclick="setTool('pencil')">✏️ Lápiz</button>
+      <button class="btn" id="btnFill" onclick="setTool('fill')">🪣 Rellenar</button>
     </div>
 
-    <!-- Contenedor del Canvas -->
-    <div class="canvas-container" id="canvasContainer">
-      <canvas id="bgCanvas" width="700" height="450"></canvas>
+    <!-- Color y Tamaño -->
+    <div class="tool-group">
+      <input type="color" id="colorPicker" class="color-picker" value="#ff0000">
+      <input type="range" id="brushSize" min="2" max="40" value="10">
+    </div>
+
+    <!-- Gestión de Plantilla / Imagen -->
+    <div class="tool-group">
+      <input type="file" id="imageLoader" accept="image/*" style="display: none;">
+      <button class="btn" onclick="document.getElementById('imageLoader').click()">🖼️ Cargar Imagen</button>
+      <button class="btn btn-danger" onclick="removeTemplate()">❌ Quitar Imagen</button>
+    </div>
+
+    <!-- Acciones -->
+    <div class="tool-group" style="border: none;">
+      <button class="btn" onclick="undo()">↩️ Deshacer</button>
+      <button class="btn btn-danger" onclick="clearDrawing()">🗑️ Limpiar Dibujo</button>
+      <button class="btn" style="background: #4caf50; color: white;" onclick="downloadImage()">💾 Guardar</button>
     </div>
   </div>
 
+  <div class="canvas-container">
+    <canvas id="backgroundCanvas" width="600" height="450"></canvas>
+    <canvas id="drawingCanvas" width="600" height="450"></canvas>
+    <canvas id="templateCanvas" width="600" height="450"></canvas>
+  </div>
+
   <script>
-    const canvasContainer = document.getElementById('canvasContainer');
-    const bgCanvas = document.getElementById('bgCanvas');
+    const bgCanvas = document.getElementById('backgroundCanvas');
     const bgCtx = bgCanvas.getContext('2d');
-
-    const colorBtns = document.querySelectorAll('.color-btn');
-    const sizeInput = document.getElementById('size');
-    const clearBtn = document.getElementById('clearBtn');
-    const undoBtn = document.getElementById('undoBtn');
-    const downloadBtn = document.getElementById('downloadBtn');
-    const imageLoader = document.getElementById('imageLoader');
-    const thumbs = document.querySelectorAll('.thumb');
-
-    const addLayerBtn = document.getElementById('addLayerBtn');
-    const layerListUI = document.getElementById('layerList');
-
-    const MAX_PAINT_LAYERS = 3;
-    let paintLayers = [];
-    let activeLayerIndex = -1;
+    const drawCanvas = document.getElementById('drawingCanvas');
+    const drawCtx = drawCanvas.getContext('2d');
+    const tplCanvas = document.getElementById('templateCanvas');
+    const tplCtx = tplCanvas.getContext('2d');
 
     let isDrawing = false;
-    let currentColor = '#ff4757';
-    let currentSize = 10;
-    let history = [];
-    const MAX_HISTORY = 10;
+    let currentTool = 'brush';
+    let undoHistory = [];
+    const maxUndo = 10;
 
-    // Crear Capa Dinámica
-    function createLayer() {
-      if (paintLayers.length >= MAX_PAINT_LAYERS) return;
+    // Inicializar fondo blanco
+    bgCtx.fillStyle = '#ffffff';
+    bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
+    saveState();
 
-      const layerId = paintLayers.length + 1;
-      const canvas = document.createElement('canvas');
-      canvas.width = 700;
-      canvas.height = 450;
-      canvas.style.zIndex = layerId + 1; // Colocar por encima de bgCanvas (zIndex 1)
-
-      const ctx = canvas.getContext('2d');
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-
-      // Agregar eventos directos a cada canvas creado
-      canvas.addEventListener('mousedown', startDrawing);
-      canvas.addEventListener('mousemove', draw);
-      canvas.addEventListener('mouseup', stopDrawing);
-      canvas.addEventListener('mouseleave', stopDrawing);
-
-      canvas.addEventListener('touchstart', startDrawing);
-      canvas.addEventListener('touchmove', draw);
-      canvas.addEventListener('touchend', stopDrawing);
-
-      canvasContainer.appendChild(canvas);
-
-      const layerObj = {
-        id: layerId,
-        canvas: canvas,
-        ctx: ctx,
-        visible: true
-      };
-
-      paintLayers.push(layerObj);
-      setActiveLayer(paintLayers.length - 1);
-    }
-
-    function setActiveLayer(index) {
-      activeLayerIndex = index;
-      history = []; // Limpiar historial para la capa actual
-      
-      // Ajustar cursor e interactividad en cada capa
-      paintLayers.forEach((layer, i) => {
-        if (i === activeLayerIndex) {
-          layer.canvas.style.pointerEvents = 'auto';
-          layer.canvas.style.cursor = 'crosshair';
-        } else {
-          layer.canvas.style.pointerEvents = 'none';
-        }
-      });
-
-      updateLayerUI();
-    }
-
-    function updateLayerUI() {
-      layerListUI.innerHTML = '';
-      
-      paintLayers.forEach((layer, index) => {
-        const item = document.createElement('div');
-        item.className = `layer-item ${index === activeLayerIndex ? 'active' : ''}`;
-        
-        const name = document.createElement('span');
-        name.innerText = `L${layer.id}`;
-        name.onclick = () => setActiveLayer(index);
-
-        const visToggle = document.createElement('span');
-        visToggle.className = 'layer-toggle-vis';
-        visToggle.innerText = layer.visible ? '👁️' : '🙈';
-        visToggle.onclick = (e) => {
-          e.stopPropagation();
-          layer.visible = !layer.visible;
-          layer.canvas.style.display = layer.visible ? 'block' : 'none';
-          updateLayerUI();
-        };
-
-        item.appendChild(name);
-        item.appendChild(visToggle);
-        layerListUI.appendChild(item);
-      });
-
-      // Habilitar / Deshabilitar botón
-      if (paintLayers.length >= MAX_PAINT_LAYERS) {
-        addLayerBtn.disabled = true;
-      } else {
-        addLayerBtn.disabled = false;
-      }
-    }
-
-    function getActiveLayer() {
-      return paintLayers[activeLayerIndex] || null;
+    function setTool(tool) {
+      currentTool = tool;
+      document.querySelectorAll('.tool-group .btn').forEach(b => b.classList.remove('active'));
+      if(tool === 'brush') document.getElementById('btnBrush').classList.add('active');
+      if(tool === 'marker') document.getElementById('btnMarker').classList.add('active');
+      if(tool === 'pencil') document.getElementById('btnPencil').classList.add('active');
+      if(tool === 'fill') document.getElementById('btnFill').classList.add('active');
     }
 
     function saveState() {
-      const active = getActiveLayer();
-      if (!active) return;
-      if (history.length >= MAX_HISTORY) history.shift();
-      history.push(active.ctx.getImageData(0, 0, bgCanvas.width, bgCanvas.height));
+      if (undoHistory.length >= maxUndo) undoHistory.shift();
+      undoHistory.push(drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height));
     }
 
-    function getCoords(e) {
-      const rect = bgCanvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      return {
-        x: clientX - rect.left,
-        y: clientY - rect.top
-      };
+    function undo() {
+      if (undoHistory.length > 1) {
+        undoHistory.pop();
+        const previousState = undoHistory[undoHistory.length - 1];
+        drawCtx.putImageData(previousState, 0, 0);
+      } else if (undoHistory.length === 1) {
+        drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      }
     }
+
+    // Dibujo con ratón / táctil
+    drawCanvas.addEventListener('mousedown', startDrawing);
+    drawCanvas.addEventListener('mousemove', draw);
+    drawCanvas.addEventListener('mouseup', stopDrawing);
+    drawCanvas.addEventListener('mouseleave', stopDrawing);
+
+    drawCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e.touches[0]); });
+    drawCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+    drawCanvas.addEventListener('touchend', stopDrawing);
 
     function startDrawing(e) {
-      const active = getActiveLayer();
-      if (!active || !active.visible) return;
+      const rect = drawCanvas.getBoundingClientRect();
+      const x = Math.round(e.clientX - rect.left);
+      const y = Math.round(e.clientY - rect.top);
 
-      saveState();
+      if (currentTool === 'fill') {
+        floodFill(x, y, document.getElementById('colorPicker').value);
+        saveState();
+        return;
+      }
+
       isDrawing = true;
-      const coords = getCoords(e);
-      active.ctx.beginPath();
-      active.ctx.moveTo(coords.x, coords.y);
+      drawCtx.beginPath();
+      drawCtx.moveTo(x, y);
     }
 
     function draw(e) {
       if (!isDrawing) return;
-      e.preventDefault();
-      
-      const active = getActiveLayer();
-      if (!active) return;
+      const rect = drawCanvas.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
-      const coords = getCoords(e);
-      active.ctx.strokeStyle = currentColor;
-      active.ctx.lineWidth = currentSize;
+      const color = document.getElementById('colorPicker').value;
+      const size = document.getElementById('brushSize').value;
 
-      active.ctx.lineTo(coords.x, coords.y);
-      active.ctx.stroke();
+      drawCtx.lineCap = 'round';
+      drawCtx.lineJoin = 'round';
+
+      if (currentTool === 'brush') {
+        drawCtx.globalAlpha = 1.0;
+        drawCtx.strokeStyle = color;
+        drawCtx.lineWidth = size;
+      } else if (currentTool === 'marker') {
+        drawCtx.globalAlpha = 0.4; // Transparencia tipo resaltador
+        drawCtx.strokeStyle = color;
+        drawCtx.lineWidth = size * 1.5;
+      } else if (currentTool === 'pencil') {
+        drawCtx.globalAlpha = 0.8;
+        drawCtx.strokeStyle = color;
+        drawCtx.lineWidth = Math.max(1, size / 3); // Lápiz más delgado
+      }
+
+      drawCtx.lineTo(x, y);
+      drawCtx.stroke();
     }
 
     function stopDrawing() {
-      const active = getActiveLayer();
-      if (isDrawing && active) {
-        active.ctx.closePath();
+      if (isDrawing) {
         isDrawing = false;
+        drawCtx.closePath();
+        drawCtx.globalAlpha = 1.0; // Resetear transparencia
+        saveState();
       }
     }
 
-    function drawBackgroundImage(img) {
-      bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-      const hRatio = bgCanvas.width / img.width;
-      const vRatio = bgCanvas.height / img.height;
-      const ratio = Math.min(hRatio, vRatio);
-      
-      const centerShiftX = (bgCanvas.width - img.width * ratio) / 2;
-      const centerShiftY = (bgCanvas.height - img.height * ratio) / 2;
-      
-      bgCtx.drawImage(
-        img, 
-        0, 0, img.width, img.height,
-        centerShiftX, centerShiftY, img.width * ratio, img.height * ratio
-      );
-    }
-
-    // Botón Agregar Capa
-    addLayerBtn.addEventListener('click', () => {
-      createLayer();
-    });
-
-    // Plantillas de Galería
-    thumbs.forEach(thumb => {
-      thumb.addEventListener('click', (e) => {
-        const img = new Image();
-        img.onload = () => drawBackgroundImage(img);
-        img.src = e.target.src;
-      });
-    });
-
-    // Cargar imagen de usuario
-    imageLoader.addEventListener('change', (e) => {
+    // Cargar imagen en la CAPA INDEPENDIENTE DE PLANTILLA
+    document.getElementById('imageLoader').addEventListener('change', function(e) {
       const reader = new FileReader();
-      reader.onload = (event) => {
+      reader.onload = function(event) {
         const img = new Image();
-        img.onload = () => drawBackgroundImage(img);
-        img.src = event.target.result;
-      };
-      if (e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
-    });
-
-    // Deshacer (Undo)
-    undoBtn.addEventListener('click', () => {
-      const active = getActiveLayer();
-      if (active && history.length > 0) {
-        const previousState = history.pop();
-        active.ctx.putImageData(previousState, 0, 0);
-      }
-    });
-
-    // Guardar imagen fusionando capas
-    downloadBtn.addEventListener('click', () => {
-      const tempCanvas = document.createElement('canvas');
-      tempCanvas.width = bgCanvas.width;
-      tempCanvas.height = bgCanvas.height;
-      const tempCtx = tempCanvas.getContext('2d');
-
-      // Fondo Blanco
-      tempCtx.fillStyle = '#ffffff';
-      tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
-
-      // Dibujar fondo
-      tempCtx.drawImage(bgCanvas, 0, 0);
-
-      // Dibujar capas visibles
-      paintLayers.forEach(layer => {
-        if (layer.visible) {
-          tempCtx.drawImage(layer.canvas, 0, 0);
+        img.onload = function() {
+          tplCtx.clearRect(0, 0, tplCanvas.width, tplCanvas.height);
+          // Dibujar escalado proporcional
+          const hRatio = tplCanvas.width / img.width;
+          const vRatio = tplCanvas.height / img.height;
+          const ratio = Math.min(hRatio, vRatio);
+          const centerShiftX = (tplCanvas.width - img.width * ratio) / 2;
+          const centerShiftY = (tplCanvas.height - img.height * ratio) / 2;
+          
+          tplCtx.drawImage(img, 0, 0, img.width, img.height, centerShiftX, centerShiftY, img.width * ratio, img.height * ratio);
         }
-      });
+        img.src = event.target.result;
+      }
+      if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
+    });
+
+    // Quitar plantilla sin borrar lo pintado
+    function removeTemplate() {
+      tplCtx.clearRect(0, 0, tplCanvas.width, tplCanvas.height);
+      document.getElementById('imageLoader').value = '';
+    }
+
+    function clearDrawing() {
+      drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      saveState();
+    }
+
+    // Bote de pintura básico (Flood Fill)
+    function floodFill(startX, startY, fillColorHex) {
+      const imgData = drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+      const data = imgData.data;
+      const targetColor = getPixelColor(data, startX, startY);
+      const fillColor = hexToRgb(fillColorHex);
+
+      if (colorsMatch(targetColor, fillColor)) return;
+
+      const queue = [[startX, startY]];
+      const width = drawCanvas.width;
+      const height = drawCanvas.height;
+
+      while (queue.length > 0) {
+        const [x, y] = queue.pop();
+        const idx = (y * width + x) * 4;
+
+        if (x < 0 || x >= width || y < 0 || y >= height) continue;
+
+        if (colorsMatch(getPixelColor(data, x, y), targetColor)) {
+          setPixelColor(data, idx, fillColor);
+          queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
+        }
+      }
+      drawCtx.putImageData(imgData, 0, 0);
+    }
+
+    function getPixelColor(data, x, y) {
+      const idx = (y * drawCanvas.width + x) * 4;
+      return [data[idx], data[idx+1], data[idx+2], data[idx+3]];
+    }
+
+    function setPixelColor(data, idx, color) {
+      data[idx] = color[0];
+      data[idx+1] = color[1];
+      data[idx+2] = color[2];
+      data[idx+3] = 255;
+    }
+
+    function colorsMatch(c1, c2) {
+      return c1[0] === c2[0] && c1[1] === c2[1] && c1[2] === c2[2] && c1[3] === c2[3];
+    }
+
+    function hexToRgb(hex) {
+      const bigint = parseInt(hex.slice(1), 16);
+      return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255, 255];
+    }
+
+    // Exportar composición final
+    function downloadImage() {
+      const exportCanvas = document.createElement('canvas');
+      exportCanvas.width = drawCanvas.width;
+      exportCanvas.height = drawCanvas.height;
+      const expCtx = exportCanvas.getContext('2d');
+
+      // Unir capas: Fondo -> Dibujo -> Plantilla
+      expCtx.drawImage(bgCanvas, 0, 0);
+      expCtx.drawImage(drawCanvas, 0, 0);
+      expCtx.drawImage(tplCanvas, 0, 0);
 
       const link = document.createElement('a');
-      link.download = 'my-drawing.png';
-      link.href = tempCanvas.toDataURL('image/png');
+      link.download = 'mi-dibujo-floppy.png';
+      link.href = exportCanvas.toDataURL();
       link.click();
-    });
-
-    // Selector de colores
-    colorBtns.forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        document.querySelector('.color-btn.active').classList.remove('active');
-        e.target.classList.add('active');
-        currentColor = e.target.getAttribute('data-color');
-      });
-    });
-
-    sizeInput.addEventListener('input', (e) => currentSize = e.target.value);
-
-    // Limpiar capa activa
-    clearBtn.addEventListener('click', () => {
-      const active = getActiveLayer();
-      if (active) {
-        saveState();
-        active.ctx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-      }
-    });
-
-    // Iniciar con la Capa 1 creada
-    createLayer();
+    }
   </script>
 </body>
 </html>
