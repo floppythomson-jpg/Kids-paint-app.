@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Kids Coloring App</title>
+  <title>Kids Coloring App - Con Tutor</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; user-select: none; }
     body { background-color: #eef5ff; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 15px; }
-    h1 { color: #333; margin-bottom: 10px; font-size: 1.5rem; }
+    h1 { color: #333; margin-bottom: 10px; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
     
     .toolbar { display: flex; flex-wrap: wrap; gap: 8px; background: white; padding: 10px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 12px; justify-content: center; max-width: 850px; width: 100%; }
     .tool-group { display: flex; align-items: center; gap: 5px; border-right: 1px solid #eee; padding-right: 8px; margin-right: 3px; }
@@ -16,6 +16,8 @@
     .btn.active { background: #4a90e2; color: white; }
     .btn-danger { background: #ffe0e0; color: #d32f2f; }
     .btn-danger:hover { background: #ffcdd2; }
+    .btn-tutor { background: #ffca28; color: #333; font-size: 0.9rem; border-radius: 20px; padding: 6px 14px; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+    .btn-tutor:hover { background: #ffb300; }
     
     .color-picker { width: 32px; height: 32px; border: none; border-radius: 50%; cursor: pointer; }
     
@@ -31,11 +33,23 @@
     .layers-control { display: flex; gap: 4px; align-items: center; }
     .layer-item { padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; background: #e0e0e0; cursor: pointer; }
     .layer-item.active { background: #ff9800; color: white; font-weight: bold; }
+
+    /* Estilos del Modal del Mini Tutor */
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+    .modal-card { background: white; width: 90%; max-width: 420px; border-radius: 20px; padding: 20px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: popIn 0.3s ease; position: relative; }
+    @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .tutor-avatar { font-size: 3.5rem; margin-bottom: 10px; }
+    .tutor-title { font-size: 1.2rem; color: #333; margin-bottom: 10px; font-weight: bold; }
+    .tutor-text { font-size: 0.95rem; color: #555; margin-bottom: 20px; line-height: 1.4; }
+    .tutor-nav { display: flex; justify-content: space-between; align-items: center; }
   </style>
 </head>
 <body>
 
-  <h1>🎨 Mi Mini App de Pintar</h1>
+  <h1>
+    🎨 Mi Mini App de Pintar 
+    <button class="btn btn-tutor" onclick="openTutor()">🐰 ¿Cómo jugar?</button>
+  </h1>
 
   <div class="toolbar">
     <!-- Herramientas / Brochas -->
@@ -80,6 +94,20 @@
     <canvas id="templateCanvas" width="600" height="450"></canvas>
   </div>
 
+  <!-- Modal del Mini Tutor -->
+  <div class="modal-overlay" id="tutorModal">
+    <div class="modal-card">
+      <div class="tutor-avatar" id="tutorAvatar">🐰</div>
+      <div class="tutor-title" id="tutorTitle">¡Hola! Soy Floppy</div>
+      <div class="tutor-text" id="tutorText">Te enseñaré a usar tu mini app de dibujo en unos pasos sencillos.</div>
+      <div class="tutor-nav">
+        <button class="btn" id="btnPrevTutor" onclick="prevStep()">⬅️ Atrás</button>
+        <span id="stepIndicator" style="font-size: 0.8rem; font-weight: bold; color: #888;">1/4</span>
+        <button class="btn" style="background: #ff9800; color: white;" id="btnNextTutor" onclick="nextStep()">Siguiente ➡️</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const container = document.getElementById('canvasContainer');
     const bgCanvas = document.getElementById('bgCanvas');
@@ -113,7 +141,6 @@
       newCanvas.className = 'drawing-layer';
       newCanvas.style.zIndex = 10 + layers.length;
 
-      // Insertar antes de la plantilla (templateCanvas siempre va encima)
       container.insertBefore(newCanvas, tplCanvas);
 
       const layerObj = {
@@ -249,7 +276,7 @@
       }
     }
 
-    // Cargar plantilla en Capa Especial
+    // Cargar plantilla
     document.getElementById('imageLoader').addEventListener('change', function(e) {
       const reader = new FileReader();
       reader.onload = function(event) {
@@ -280,7 +307,7 @@
       ctx.clearRect(0, 0, 600, 450);
     }
 
-    // Flood Fill en capa activa
+    // Flood Fill
     function floodFill(startX, startY, fillColorHex) {
       const ctx = getActiveCtx();
       const imgData = ctx.getImageData(0, 0, 600, 450);
@@ -326,14 +353,12 @@
       return [(bigint >> 16) & 255, (bigint >> 8) & 255, bigint & 255, 255];
     }
 
-    // Exportar composición final
     function downloadImage() {
       const exportCanvas = document.createElement('canvas');
       exportCanvas.width = 600;
       exportCanvas.height = 450;
       const expCtx = exportCanvas.getContext('2d');
 
-      // Unir Fondo -> Capas de dibujo -> Plantilla
       expCtx.drawImage(bgCanvas, 0, 0);
       layers.forEach(l => expCtx.drawImage(l.canvas, 0, 0));
       expCtx.drawImage(tplCanvas, 0, 0);
@@ -342,6 +367,76 @@
       link.download = 'mi-dibujo-floppy.png';
       link.href = exportCanvas.toDataURL();
       link.click();
+    }
+
+    /* LÓGICA DEL MINI TUTOR */
+    let currentStep = 0;
+    const tutorSteps = [
+      {
+        avatar: "🖌️",
+        title: "¡Elige tu Herramienta!",
+        text: "Usa el <b>Pincel</b> para trazar, el <b>Marcador</b> para colorear suave, el <b>Lápiz</b> para detalles finos y el <b>Bote de Relleno</b> 🪣 para pintar áreas enteras."
+      },
+      {
+        avatar: "🥞",
+        title: "¡Usa las Capas!",
+        text: "Las capas son como hojas transparentes apiladas. Toca <b>➕</b> para agregar hasta 3 capas. Así puedes pintar sin borrar lo que hiciste antes."
+      },
+      {
+        avatar: "🖼️",
+        title: "Pinta sobre Dibujos",
+        text: "Presiona <b>Cargar Imagen</b> para usar una plantilla para colorear. Si quieres quitarla después, solo toca el botón rojo <b>❌ Quitar Imagen</b>."
+      },
+      {
+        avatar: "💾",
+        title: "Guarda tu Arte",
+        text: "Cuando termines tu obra maestra, presiona el botón verde <b>💾 Guardar</b> para descargarla a tu dispositivo."
+      }
+    ];
+
+    function openTutor() {
+      currentStep = 0;
+      updateTutorUI();
+      document.getElementById('tutorModal').style.display = 'flex';
+    }
+
+    function updateTutorUI() {
+      const step = tutorSteps[currentStep];
+      document.getElementById('tutorAvatar').innerText = step.avatar;
+      document.getElementById('tutorTitle').innerText = step.title;
+      document.getElementById('tutorText').innerHTML = step.text;
+      document.getElementById('stepIndicator').innerText = `${currentStep + 1}/${tutorSteps.length}`;
+
+      document.getElementById('btnPrevTutor').style.visibility = (currentStep === 0) ? 'hidden' : 'visible';
+      
+      const nextBtn = document.getElementById('btnNextTutor');
+      if (currentStep === tutorSteps.length - 1) {
+        nextBtn.innerText = "¡Entendido! 🎉";
+        nextBtn.style.background = "#4caf50";
+      } else {
+        nextBtn.innerText = "Siguiente ➡️";
+        nextBtn.style.background = "#ff9800";
+      }
+    }
+
+    function nextStep() {
+      if (currentStep < tutorSteps.length - 1) {
+        currentStep++;
+        updateTutorUI();
+      } else {
+        closeTutor();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 0) {
+        currentStep--;
+        updateTutorUI();
+      }
+    }
+
+    function closeTutor() {
+      document.getElementById('tutorModal').style.display = 'none';
     }
   </script>
 </body>
