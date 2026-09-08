@@ -9,7 +9,7 @@
     body { background-color: #eef5ff; display: flex; flex-direction: column; align-items: center; min-height: 100vh; padding: 15px; }
     h1 { color: #333; margin-bottom: 10px; font-size: 1.5rem; }
     
-    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; background: white; padding: 10px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 12px; justify-content: center; max-width: 800px; width: 100%; }
+    .toolbar { display: flex; flex-wrap: wrap; gap: 8px; background: white; padding: 10px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); margin-bottom: 12px; justify-content: center; max-width: 850px; width: 100%; }
     .tool-group { display: flex; align-items: center; gap: 5px; border-right: 1px solid #eee; padding-right: 8px; margin-right: 3px; }
     .btn { padding: 8px 12px; border: none; border-radius: 8px; background: #f0f0f0; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 4px; transition: background 0.2s; }
     .btn:hover { background: #e0e0e0; }
@@ -22,18 +22,23 @@
     .canvas-container { position: relative; width: 600px; height: 450px; background: white; border-radius: 12px; box-shadow: 0 6px 15px rgba(0,0,0,0.15); overflow: hidden; }
     canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; touch-action: none; }
     
-    /* Capas organizadas */
-    #backgroundCanvas { z-index: 1; }
-    #drawingCanvas { z-index: 2; }
-    #templateCanvas { z-index: 3; pointer-events: none; }
+    /* Capas */
+    #bgCanvas { z-index: 1; }
+    .drawing-layer { z-index: 10; }
+    #templateCanvas { z-index: 100; pointer-events: none; }
+    
+    /* Selector de Capas UI */
+    .layers-control { display: flex; gap: 4px; align-items: center; }
+    .layer-item { padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; background: #e0e0e0; cursor: pointer; }
+    .layer-item.active { background: #ff9800; color: white; font-weight: bold; }
   </style>
 </head>
 <body>
 
-  <h1>🎨 Mi Mini App de Pintar</h1>
+  <h1>🎨 Mi Mi Mini App de Pintar</h1>
 
   <div class="toolbar">
-    <!-- Selección de Brochas -->
+    <!-- Herramientas / Brochas -->
     <div class="tool-group">
       <button class="btn active" id="btnBrush" onclick="setTool('brush')">🖌️ Pincel</button>
       <button class="btn" id="btnMarker" onclick="setTool('marker')">🖋️ Marcador</button>
@@ -47,44 +52,105 @@
       <input type="range" id="brushSize" min="2" max="40" value="10">
     </div>
 
-    <!-- Gestión de Plantilla / Imagen -->
+    <!-- Control de Capas de Dibujo -->
+    <div class="tool-group">
+      <span style="font-size:0.8rem; font-weight:bold;">Capas:</span>
+      <div id="layersList" class="layers-control"></div>
+      <button class="btn" onclick="addLayer()">➕</button>
+    </div>
+
+    <!-- Gestión de Imagen / Plantilla -->
     <div class="tool-group">
       <input type="file" id="imageLoader" accept="image/*" style="display: none;">
       <button class="btn" onclick="document.getElementById('imageLoader').click()">🖼️ Cargar Imagen</button>
       <button class="btn btn-danger" onclick="removeTemplate()">❌ Quitar Imagen</button>
     </div>
 
-    <!-- Acciones -->
+    <!-- Acciones generales -->
     <div class="tool-group" style="border: none;">
       <button class="btn" onclick="undo()">↩️ Deshacer</button>
-      <button class="btn btn-danger" onclick="clearDrawing()">🗑️ Limpiar Dibujo</button>
+      <button class="btn btn-danger" onclick="clearCurrentLayer()">🗑️ Limpiar Capa</button>
       <button class="btn" style="background: #4caf50; color: white;" onclick="downloadImage()">💾 Guardar</button>
     </div>
   </div>
 
-  <div class="canvas-container">
-    <canvas id="backgroundCanvas" width="600" height="450"></canvas>
-    <canvas id="drawingCanvas" width="600" height="450"></canvas>
+  <div class="canvas-container" id="canvasContainer">
+    <canvas id="bgCanvas" width="600" height="450"></canvas>
+    <!-- Las capas dinámicas se agregan aquí por JavaScript -->
     <canvas id="templateCanvas" width="600" height="450"></canvas>
   </div>
 
   <script>
-    const bgCanvas = document.getElementById('backgroundCanvas');
+    const container = document.getElementById('canvasContainer');
+    const bgCanvas = document.getElementById('bgCanvas');
     const bgCtx = bgCanvas.getContext('2d');
-    const drawCanvas = document.getElementById('drawingCanvas');
-    const drawCtx = drawCanvas.getContext('2d');
     const tplCanvas = document.getElementById('templateCanvas');
     const tplCtx = tplCanvas.getContext('2d');
 
+    let layers = [];
+    let activeLayerIndex = 0;
     let isDrawing = false;
     let currentTool = 'brush';
     let undoHistory = [];
     const maxUndo = 10;
 
-    // Inicializar fondo blanco
+    // Fondo Blanco Inicial
     bgCtx.fillStyle = '#ffffff';
     bgCtx.fillRect(0, 0, bgCanvas.width, bgCanvas.height);
-    saveState();
+
+    // Inicializar con la primera Capa de dibujo
+    addLayer();
+
+    function addLayer() {
+      if (layers.length >= 3) {
+        alert("Máximo 3 capas de dibujo permitidas");
+        return;
+      }
+
+      const newCanvas = document.createElement('canvas');
+      newCanvas.width = 600;
+      newCanvas.height = 450;
+      newCanvas.className = 'drawing-layer';
+      newCanvas.style.zIndex = 10 + layers.length;
+
+      // Insertar antes de la plantilla (templateCanvas siempre va encima)
+      container.insertBefore(newCanvas, tplCanvas);
+
+      const layerObj = {
+        canvas: newCanvas,
+        ctx: newCanvas.getContext('2d'),
+        id: layers.length + 1
+      };
+
+      layers.push(layerObj);
+      selectLayer(layers.length - 1);
+      updateLayersUI();
+      attachEvents(newCanvas);
+    }
+
+    function selectLayer(index) {
+      activeLayerIndex = index;
+      layers.forEach((l, idx) => {
+        l.canvas.style.pointerEvents = (idx === activeLayerIndex) ? 'auto' : 'none';
+      });
+      updateLayersUI();
+    }
+
+    function updateLayersUI() {
+      const list = document.getElementById('layersList');
+      list.innerHTML = '';
+      layers.forEach((l, idx) => {
+        const item = document.createElement('div');
+        item.className = `layer-item ${idx === activeLayerIndex ? 'active' : ''}`;
+        item.innerText = `Capa ${l.id}`;
+        item.onclick = () => selectLayer(idx);
+        list.appendChild(item);
+      });
+    }
+
+    function getActiveCtx() {
+      return layers[activeLayerIndex].ctx;
+    }
 
     function setTool(tool) {
       currentTool = tool;
@@ -97,92 +163,99 @@
 
     function saveState() {
       if (undoHistory.length >= maxUndo) undoHistory.shift();
-      undoHistory.push(drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height));
+      const ctx = getActiveCtx();
+      undoHistory.push({
+        layerIndex: activeLayerIndex,
+        data: ctx.getImageData(0, 0, 600, 450)
+      });
     }
 
     function undo() {
-      if (undoHistory.length > 1) {
-        undoHistory.pop();
-        const previousState = undoHistory[undoHistory.length - 1];
-        drawCtx.putImageData(previousState, 0, 0);
-      } else if (undoHistory.length === 1) {
-        drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+      if (undoHistory.length > 0) {
+        const lastState = undoHistory.pop();
+        const ctx = layers[lastState.layerIndex].ctx;
+        ctx.putImageData(lastState.data, 0, 0);
       }
     }
 
-    // Dibujo con ratón / táctil
-    drawCanvas.addEventListener('mousedown', startDrawing);
-    drawCanvas.addEventListener('mousemove', draw);
-    drawCanvas.addEventListener('mouseup', stopDrawing);
-    drawCanvas.addEventListener('mouseleave', stopDrawing);
+    function attachEvents(canvas) {
+      canvas.addEventListener('mousedown', startDrawing);
+      canvas.addEventListener('mousemove', draw);
+      canvas.addEventListener('mouseup', stopDrawing);
+      canvas.addEventListener('mouseleave', stopDrawing);
 
-    drawCanvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e.touches[0]); });
-    drawCanvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
-    drawCanvas.addEventListener('touchend', stopDrawing);
+      canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startDrawing(e.touches[0]); });
+      canvas.addEventListener('touchmove', (e) => { e.preventDefault(); draw(e.touches[0]); });
+      canvas.addEventListener('touchend', stopDrawing);
+    }
 
     function startDrawing(e) {
-      const rect = drawCanvas.getBoundingClientRect();
+      const activeCanvas = layers[activeLayerIndex].canvas;
+      const rect = activeCanvas.getBoundingClientRect();
       const x = Math.round(e.clientX - rect.left);
       const y = Math.round(e.clientY - rect.top);
 
+      saveState();
+
       if (currentTool === 'fill') {
         floodFill(x, y, document.getElementById('colorPicker').value);
-        saveState();
         return;
       }
 
       isDrawing = true;
-      drawCtx.beginPath();
-      drawCtx.moveTo(x, y);
+      const ctx = getActiveCtx();
+      ctx.beginPath();
+      ctx.moveTo(x, y);
     }
 
     function draw(e) {
       if (!isDrawing) return;
-      const rect = drawCanvas.getBoundingClientRect();
+      const activeCanvas = layers[activeLayerIndex].canvas;
+      const rect = activeCanvas.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
 
       const color = document.getElementById('colorPicker').value;
       const size = document.getElementById('brushSize').value;
+      const ctx = getActiveCtx();
 
-      drawCtx.lineCap = 'round';
-      drawCtx.lineJoin = 'round';
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
 
       if (currentTool === 'brush') {
-        drawCtx.globalAlpha = 1.0;
-        drawCtx.strokeStyle = color;
-        drawCtx.lineWidth = size;
+        ctx.globalAlpha = 1.0;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size;
       } else if (currentTool === 'marker') {
-        drawCtx.globalAlpha = 0.4; // Transparencia tipo resaltador
-        drawCtx.strokeStyle = color;
-        drawCtx.lineWidth = size * 1.5;
+        ctx.globalAlpha = 0.4;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = size * 1.5;
       } else if (currentTool === 'pencil') {
-        drawCtx.globalAlpha = 0.8;
-        drawCtx.strokeStyle = color;
-        drawCtx.lineWidth = Math.max(1, size / 3); // Lápiz más delgado
+        ctx.globalAlpha = 0.8;
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(1, size / 3);
       }
 
-      drawCtx.lineTo(x, y);
-      drawCtx.stroke();
+      ctx.lineTo(x, y);
+      ctx.stroke();
     }
 
     function stopDrawing() {
       if (isDrawing) {
         isDrawing = false;
-        drawCtx.closePath();
-        drawCtx.globalAlpha = 1.0; // Resetear transparencia
-        saveState();
+        const ctx = getActiveCtx();
+        ctx.closePath();
+        ctx.globalAlpha = 1.0;
       }
     }
 
-    // Cargar imagen en la CAPA INDEPENDIENTE DE PLANTILLA
+    // Cargar plantilla en Capa Especial
     document.getElementById('imageLoader').addEventListener('change', function(e) {
       const reader = new FileReader();
       reader.onload = function(event) {
         const img = new Image();
         img.onload = function() {
           tplCtx.clearRect(0, 0, tplCanvas.width, tplCanvas.height);
-          // Dibujar escalado proporcional
           const hRatio = tplCanvas.width / img.width;
           const vRatio = tplCanvas.height / img.height;
           const ratio = Math.min(hRatio, vRatio);
@@ -196,20 +269,21 @@
       if(e.target.files[0]) reader.readAsDataURL(e.target.files[0]);
     });
 
-    // Quitar plantilla sin borrar lo pintado
     function removeTemplate() {
       tplCtx.clearRect(0, 0, tplCanvas.width, tplCanvas.height);
       document.getElementById('imageLoader').value = '';
     }
 
-    function clearDrawing() {
-      drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
+    function clearCurrentLayer() {
       saveState();
+      const ctx = getActiveCtx();
+      ctx.clearRect(0, 0, 600, 450);
     }
 
-    // Bote de pintura básico (Flood Fill)
+    // Flood Fill en capa activa
     function floodFill(startX, startY, fillColorHex) {
-      const imgData = drawCtx.getImageData(0, 0, drawCanvas.width, drawCanvas.height);
+      const ctx = getActiveCtx();
+      const imgData = ctx.getImageData(0, 0, 600, 450);
       const data = imgData.data;
       const targetColor = getPixelColor(data, startX, startY);
       const fillColor = hexToRgb(fillColorHex);
@@ -217,25 +291,22 @@
       if (colorsMatch(targetColor, fillColor)) return;
 
       const queue = [[startX, startY]];
-      const width = drawCanvas.width;
-      const height = drawCanvas.height;
-
       while (queue.length > 0) {
         const [x, y] = queue.pop();
-        const idx = (y * width + x) * 4;
+        const idx = (y * 600 + x) * 4;
 
-        if (x < 0 || x >= width || y < 0 || y >= height) continue;
+        if (x < 0 || x >= 600 || y < 0 || y >= 450) continue;
 
         if (colorsMatch(getPixelColor(data, x, y), targetColor)) {
           setPixelColor(data, idx, fillColor);
           queue.push([x + 1, y], [x - 1, y], [x, y + 1], [x, y - 1]);
         }
       }
-      drawCtx.putImageData(imgData, 0, 0);
+      ctx.putImageData(imgData, 0, 0);
     }
 
     function getPixelColor(data, x, y) {
-      const idx = (y * drawCanvas.width + x) * 4;
+      const idx = (y * 600 + x) * 4;
       return [data[idx], data[idx+1], data[idx+2], data[idx+3]];
     }
 
@@ -258,13 +329,13 @@
     // Exportar composición final
     function downloadImage() {
       const exportCanvas = document.createElement('canvas');
-      exportCanvas.width = drawCanvas.width;
-      exportCanvas.height = drawCanvas.height;
+      exportCanvas.width = 600;
+      exportCanvas.height = 450;
       const expCtx = exportCanvas.getContext('2d');
 
-      // Unir capas: Fondo -> Dibujo -> Plantilla
+      // Unir Fondo -> Capas de dibujo -> Plantilla
       expCtx.drawImage(bgCanvas, 0, 0);
-      expCtx.drawImage(drawCanvas, 0, 0);
+      layers.forEach(l => expCtx.drawImage(l.canvas, 0, 0));
       expCtx.drawImage(tplCanvas, 0, 0);
 
       const link = document.createElement('a');
